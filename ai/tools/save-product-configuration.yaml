@@ -1,0 +1,113 @@
+name: vc_catalog_save_product_configuration
+description: |
+  Create or update a configurable product's configuration — the bundle template
+  the buyer fills in at runtime. A `ProductConfiguration` is owned by exactly one
+  product (`productId`) and consists of an ordered list of `sections[]`. Each
+  section is a slot (e.g. "Motherboard", "CPU", "RAM", "GPU") the buyer picks
+  from. Each `options[]` entry references an existing product by `productId`
+  plus a `quantity` (e.g. 2 sticks of RAM).
+
+  Workflow: first create the configurable parent with `vc_catalog_save_products`
+  (productType "Configurable") to obtain its `id`, then call this tool with
+  `productId = <that id>` and the sections you want.
+
+  Pass `id: null` (omit) to create; pass an existing id to update. Sections and
+  options use the same `id`-or-null pattern. Replace semantics: posted
+  `sections[]` / `options[]` replace the persisted collections in full.
+require_approval: true
+
+parameters:
+  type: object
+  properties:
+    id:
+      type: string
+      description: Configuration id — omit/null to create, set to update
+    productId:
+      type: string
+      description: Id of the configurable parent product this configuration belongs to
+    isActive:
+      type: boolean
+      default: true
+      description: Whether the configuration is active (visible at runtime)
+    sections:
+      type: array
+      minItems: 1
+      description: Ordered slots the buyer chooses from when configuring the product
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+            description: Section id — omit/null when creating
+          name:
+            type: string
+            description: Section label shown to the buyer (e.g. "Motherboard", "CPU")
+          description:
+            type: string
+          type:
+            type: string
+            description: Section type identifier (e.g. "Product")
+            default: Product
+          isRequired:
+            type: boolean
+            default: true
+          displayOrder:
+            type: integer
+          allowCustomText:
+            type: boolean
+            default: false
+          allowPredefinedOptions:
+            type: boolean
+            default: true
+          maxLength:
+            type: integer
+          options:
+            type: array
+            description: |
+              Candidate products the buyer can pick for this slot.
+              Each option references an existing product by `productId`.
+            items:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: Option id — omit/null when creating
+                productId:
+                  type: string
+                  description: Existing product id selectable for this slot
+                quantity:
+                  type: integer
+                  default: 1
+                  minimum: 1
+                  description: How many of the option product are included when selected
+                text:
+                  type: string
+                  description: Free-form text option (used when allowCustomText is true)
+              required:
+                - productId
+        required:
+          - name
+  required:
+    - productId
+    - sections
+
+execution:
+  endpoint: /api/catalog/products/configurations
+  method: POST
+  mappings:
+    request:
+      body:
+        id: "{{id}}"
+        productId: "{{productId}}"
+        isActive: "{{isActive}}"
+        sections: "{{sections}}"
+    response:
+      configuration: "@"
+
+#permission:
+#  - catalog:configurations:update
+
+tags:
+  - catalog
+  - configurations
+  - write

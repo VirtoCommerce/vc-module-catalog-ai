@@ -1,0 +1,53 @@
+name: vc_catalog_get_products
+description: |
+  Load full catalog products by their ids.
+  Returns complete product objects — including `name`, `localizedName`, `properties[]`,
+  `reviews[]`, `images[]`, `assets[]`, `variations[]`, `associations[]` and category outline.
+  Use this whenever you need detail beyond the lightweight rows returned by
+  `vc_catalog_search_products`: reading product specifications, inspecting attached
+  files (datasheets / spec sheets under `assets[]`), checking compatibility-relevant
+  properties, or staging an update.
+  The default response group `ItemLarge` returns everything; pass a narrower one
+  (e.g. `ItemInfo,ItemEditorialReviews` for translation flows, or
+  `ItemInfo,ItemAssets,ItemProperties` for compatibility / spec-sheet lookups) to trim payload.
+require_approval: false
+
+parameters:
+  type: object
+  properties:
+    ids:
+      type: array
+      minItems: 1
+      maxItems: 50
+      items:
+        type: string
+      description: Product ids to load
+    respGroup:
+      type: string
+      default: ItemLarge
+      description: |
+        Response group flags (comma-separated). Defaults to `ItemLarge` (all fields).
+        Common narrower groups: `ItemInfo,ItemEditorialReviews` (translation flow),
+        `ItemInfo,ItemAssets,ItemProperties` (compatibility / spec-sheet flow).
+  required:
+    - ids
+
+execution:
+  endpoint: /api/ai/catalog/products/plenty
+  method: POST
+  mappings:
+    request:
+      query:
+        respGroup: "{{respGroup}}"
+      body:
+        ids: "{{ids}}"
+    response:
+      items: "$[*]"
+
+#permission:
+#  - catalog:read
+
+tags:
+  - catalog
+  - products
+  - read

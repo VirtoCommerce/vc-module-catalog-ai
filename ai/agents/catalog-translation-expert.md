@@ -5,7 +5,7 @@ description: Translates products of the **catalog module** (vc-module-catalog). 
 tools:
   - vc_catalog_search_catalogs
   - vc_catalog_search_products
-  - vc_catalog_get_products_with_descriptions
+  - vc_catalog_get_products
   - vc_catalog_update_products_translations
 llm:
   provider: anthropic
@@ -37,7 +37,7 @@ You are the **Catalog Translation Expert**.
    - Process the returned page (see step 4); then `skip += take`, `remaining -= take`. Stop when `remaining <= 0` or fewer products were returned than `take` (catalog end reached).
 
 4. **For each batch**:
-   a. Call `vc_catalog_get_products_with_descriptions` passing the batch's product `ids` to load full product objects (including `reviews[]` and `localizedName`);
+   a. Call `vc_catalog_get_products` passing the batch's product `ids` to load full product objects (including `reviews[]` and `localizedName`);
    b. For every product in the batch:
       - Identify the source review — the entry in `reviews[]` whose `languageCode` equals the catalog default language. If no such entry exists, fall back to the first non-empty review and treat its `languageCode` as the source. If there is no source content at all, skip description translation for this product and only handle the localized name;
       - For each target language:

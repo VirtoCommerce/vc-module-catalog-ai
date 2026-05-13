@@ -24,10 +24,12 @@
   <requireLicenseAcceptance>false</requireLicenseAcceptance>
 
   <releaseNotes>
-    First version.
     Features:
     - Catalog Translation Expert agent (catalog-translation-expert)
-    - Tools: search-catalogs, search-products, get-products-with-descriptions, update-products-translations
+    - PC Bundle Builder agent (pc-bundle-builder) — assembles configurable products from compatible components, reading spec sheets from product assets via the fetch_tenant_asset native tool
+    - Tools: search-catalogs, search-products, search-listentries, get-products, save-products, save-product-configuration, update-products-translations
+    Renamed:
+    - get-products-with-descriptions → get-products (now general-purpose; default response group ItemLarge)
   </releaseNotes>
   <copyright>Copyright © 2025-2026 VirtoCommerce. All rights reserved</copyright>
   <tags>extension module ai catalog</tags>
