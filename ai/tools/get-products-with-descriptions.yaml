@@ -1,0 +1,43 @@
+name: vc_catalog_get_products_with_descriptions
+description: |
+  Load full catalog products by their ids — including the `name`, `localizedName` and `reviews` (editorial reviews) collections used for translation.
+  Returns full product objects so the caller can read existing `reviews[]` and `localizedName.values` (to detect what's already translated) and pick a source-language review to translate from. Do **not** send these products back as-is to `vc_catalog_update_products_translations` — that tool takes only the merged `reviews` / `localizedName` you want to apply, keyed by product `id`.
+require_approval: false
+
+parameters:
+  type: object
+  properties:
+    ids:
+      type: array
+      minItems: 1
+      maxItems: 50
+      items:
+        type: string
+      description: Product ids to load
+    respGroup:
+      type: string
+      default: ItemLarge
+      description: |
+        Response group flags (comma-separated). Defaults to `ItemLarge`. For the translation flow `ItemInfo,ItemEditorialReviews` is enough — pick the narrower group when you only need `name`, `localizedName` and `reviews[]` and want a smaller payload.
+  required:
+    - ids
+
+execution:
+  endpoint: /api/ai/catalog/products/plenty
+  method: POST
+  mappings:
+    request:
+      query:
+        respGroup: "{{respGroup}}"
+      body:
+        ids: "{{ids}}"
+    response:
+      items: "$[*]"
+
+#permission:
+#  - catalog:read
+
+tags:
+  - catalog
+  - products
+  - read

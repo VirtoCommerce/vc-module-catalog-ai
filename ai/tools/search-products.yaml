@@ -1,0 +1,81 @@
+name: vc_catalog_search_products
+description: |
+  Indexed search for catalog products with filters (catalogId, keyword, ids, etc.).
+  Returns lightweight product data: id, code, name, localizedName, catalogId, categoryId.
+  Use this to enumerate products of a given catalog in pages — set `take` and increment `skip`, and read `totalCount` to know when the loop is complete.
+require_approval: false
+
+parameters:
+  type: object
+  properties:
+    keyword:
+      type: string
+      description: Free-text search phrase for product name or code
+    catalogId:
+      type: string
+      description: Restrict the search to a single catalog
+    objectIds:
+      type: array
+      items:
+        type: string
+      description: Filter by product ids
+    categoryId:
+      type: string
+      description: Restrict the search to products of this category outline (e.g. "categoryId1/categoryId2")
+    productType:
+      type: string
+      description: Filter by product type (e.g. "Physical", "Digital")
+    searchInVariations:
+      type: boolean
+      default: false
+      description: Whether product variations are included in the result set
+    withHidden:
+      type: boolean
+      default: true
+      description: Include hidden / inactive products in the result set
+    skip:
+      type: integer
+      default: 0
+      minimum: 0
+    take:
+      type: integer
+      default: 5
+      minimum: 1
+      maximum: 100
+  required: []
+
+execution:
+  endpoint: /api/catalog/search/products
+  method: POST
+  mappings:
+    request:
+      body:
+        searchPhrase: "{{keyword}}"
+        catalogId: "{{catalogId}}"
+        objectIds: "{{objectIds}}"
+        outline: "{{categoryId}}"
+        productType: "{{productType}}"
+        searchInVariations: "{{searchInVariations}}"
+        withHidden: "{{withHidden}}"
+        skip: "{{skip}}"
+        take: "{{take}}"
+    response:
+      items: >-
+        $.items[*].{
+          id: id,
+          code: code,
+          name: name,
+          localizedName: localizedName,
+          catalogId: catalogId,
+          categoryId: categoryId
+        }
+      totalCount: "$.totalCount"
+
+#permission:
+#  - catalog:read
+
+tags:
+  - catalog
+  - products
+  - search
+  - read
