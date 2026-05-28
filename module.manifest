@@ -4,10 +4,10 @@
   <version>3.1000.0</version>
   <version-tag></version-tag>
 
-  <platformVersion>3.1007.9</platformVersion>
+  <platformVersion>3.915.0</platformVersion>
   <dependencies>
-    <dependency id="VirtoCommerce.AI" version="3.1000.0" />
-    <dependency id="VirtoCommerce.Catalog" version="3.1003.0" />
+    <dependency id="VirtoCommerce.AI" version="3.800.0" />
+    <dependency id="VirtoCommerce.Catalog" version="3.885.0" />
   </dependencies>
 
   <title>VirtoCommerce Catalog AI</title>
@@ -26,11 +26,8 @@
   <releaseNotes>
     Features:
     - Catalog Translation Expert agent (catalog-translation-expert)
-    - PC Bundle Builder agent (pc-bundle-builder) — assembles configurable products from compatible components, reading spec sheets from product assets via the fetch_tenant_asset native tool
-    - Tools: search-catalogs, search-products, search-listentries, get-products, save-products, save-product-configuration, update-products-translations
-    Renamed:
-    - get-products-with-descriptions → get-products (now general-purpose; default response group ItemLarge)
+    - Tools: search-catalogs, search-products, get-products-with-descriptions, update-products-translations
   </releaseNotes>
-  <copyright>Copyright © 2025-2026 VirtoCommerce. All rights reserved</copyright>
+  <copyright>Copyright © 2026 VirtoCommerce. All rights reserved</copyright>
   <tags>extension module ai catalog</tags>
 </module>

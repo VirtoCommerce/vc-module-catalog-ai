@@ -1,13 +1,13 @@
 name: vc_catalog_update_products_translations
 description: |
-  Apply translation updates to catalog products in batch.
-  The server loads each product by `id` and overwrites **only** the fields you provide:
-  `name`, `localizedName` and/or `reviews`. Every other field (`categoryId`, `code`,
-  `properties`, `images`, `variations`, `seoInfos`, `associations`, etc.) is preserved
-  exactly as-is on the server — you do not need to round-trip them.
-  Replace semantics: when `localizedName` or `reviews` is provided, it **replaces** the
-  existing collection entirely, so include all entries you want to keep (existing + new).
-  When a field is omitted (null), the server leaves it untouched.
+  Apply translation updates to catalog products in batch. For each product, only the
+  fields you supply (`localizedName` and/or `reviews`) are overwritten — every other
+  field on the product (`categoryId`, `code`, `properties`, `images`, `variations`,
+  `seoInfos`, `associations`, etc.) is preserved as-is by the server.
+
+  Replace semantics: when sending `localizedName` or `reviews`, the full new value
+  replaces the existing one on the server — include every entry you want to keep
+  (existing + newly translated), not just the deltas.
 
 parameters:
   type: object
@@ -15,67 +15,57 @@ parameters:
     products:
       type: array
       minItems: 1
-      description: Translation updates to apply, one entry per product
+      description: |
+        One entry per product to update. Each entry is an object with these keys:
+
+          - `id` (string, required) — product id, e.g. `"76b6d640-e398-472b-85fa-9583a6b8e694"`.
+          - `localizedName` (object, optional) — shape `{ "values": { "<languageCode>": "<translated name>", ... } }`.
+            Include every language entry you want to keep on the product (existing + newly translated).
+            Omit the key entirely if you have no name changes for this product.
+          - `reviews` (array, optional) — list of review objects. Each entry:
+              `{ "id"?: string, "content": string, "languageCode": string, "reviewType": string }`.
+              `id` is the existing review id — keep it for entries you are preserving, omit it for
+              newly translated entries. `content` may contain HTML. `reviewType` is e.g.
+              `"QuickReview"` / `"FullReview"` — keep the source review's value when adding a translation.
+              `languageCode` is e.g. `"en-US"`. Include every review you want to keep
+              (existing + newly translated). Omit the key entirely if you have no review changes.
+
+        Example one-entry array:
+          [
+            {
+              "id": "76b6d640-e398-472b-85fa-9583a6b8e694",
+              "localizedName": { "values": { "en-US": "Red Bike", "de-DE": "Rotes Fahrrad" } },
+              "reviews": [
+                { "id": "existing-id-1", "content": "<p>Original</p>", "languageCode": "en-US", "reviewType": "FullReview" },
+                { "content": "<p>Übersetzt</p>", "languageCode": "de-DE", "reviewType": "FullReview" }
+              ]
+            }
+          ]
       items:
         type: object
-        properties:
-          id:
-            type: string
-            description: Product id (required — identifies the product to update)
-          name:
-            type: string
-            description: |
-              Default product name (in catalog default language). Usually omitted by the
-              translation flow — translations go into `localizedName` instead.
-          localizedName:
-            type: object
-            description: |
-              Localized product names. Shape - `{ values: { "<languageCode>": "<translated name>" } }`.
-              When provided, **replaces** the entire localizedName on the server, so include
-              all language entries you want to keep, both existing and new.
-            properties:
-              values:
-                type: object
-                description: Dictionary of language codes to translated names
-                additionalProperties:
-                  type: string
-          reviews:
-            type: array
-            description: |
-              Editorial reviews (descriptions) per language. When provided, **replaces** the
-              entire reviews collection on the server, so include all entries you want to
-              keep, both existing and newly translated.
-            items:
-              type: object
-              properties:
-                id:
-                  type: string
-                  description: Existing review id (preserve when keeping/editing an existing entry; omit when adding a new translation)
-                content:
-                  type: string
-                  description: Review text (HTML supported)
-                reviewType:
-                  type: string
-                  description: Review type (e.g. "QuickReview", "FullReview")
-                languageCode:
-                  type: string
-                  description: Language code (e.g. "en-US")
-              required:
-                - content
-                - languageCode
-                - reviewType
-        required:
-          - id
-  required:
-    - products
+        additionalProperties: true
+        description: |
+          One product update: `{ "id": "<product-id>", "localizedName"?: {...}, "reviews"?: [...] }`.
+          See parent `products` description for shapes and rules.
 
 execution:
-  endpoint: /api/ai/catalog/products/batch-translate
-  method: POST
+  endpoint: /api/catalog/products
+  method: PATCH
   mappings:
     request:
-      body:
-        products: "{{products}}"
+      body: |
+        {%- set ops = [] -%}
+        {%- for p in products -%}
+          {%- set doc = [{"op":"replace","path":"/id","value":p.id}] -%}
+          {%- if p.localizedName is defined and p.localizedName is not none -%}
+            {%- set _ = doc.append({"op":"replace","path":"/localizedName","value":p.localizedName}) -%}
+          {%- endif -%}
+          {%- if p.reviews is defined and p.reviews is not none -%}
+            {%- set _ = doc.append({"op":"replace","path":"/reviews","value":p.reviews}) -%}
+          {%- endif -%}
+          {%- set _ = ops.append(doc) -%}
+        {%- endfor -%}
+        {{ ops }}
 
 #permission:
 #  - catalog:update
