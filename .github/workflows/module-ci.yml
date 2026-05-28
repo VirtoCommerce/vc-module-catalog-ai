@@ -1,0 +1,71 @@
+name: Module CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master, dev]
+    paths-ignore:
+      - '.github/**'
+      - 'README.md'
+      - 'LICENSE'
+  pull_request:
+    branches: [main, master, dev]
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+
+jobs:
+  ci:
+    runs-on: ubuntu-24.04
+    env:
+      GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
+      BLOB_SAS: ${{ secrets.BLOB_TOKEN }}
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Read manifest
+        id: meta
+        run: |
+          MODULE_ID=$(grep -oPm1 '(?<=<id>)[^<]+' module.manifest)
+          VERSION=$(grep -oPm1 '(?<=<version>)[^<]+' module.manifest)
+          echo "moduleId=$MODULE_ID" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Apply prerelease version-tag
+        id: tag
+        if: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' }}
+        run: |
+          SUFFIX="alpha.$(git rev-parse --short=7 HEAD)"
+          sed -i "s|<version-tag>[^<]*</version-tag>|<version-tag>${SUFFIX}</version-tag>|" module.manifest
+          echo "suffix=-${SUFFIX}" >> "$GITHUB_OUTPUT"
+
+      - name: Package
+        env:
+          MODULE_ID: ${{ steps.meta.outputs.moduleId }}
+          VERSION: ${{ steps.meta.outputs.version }}
+          SUFFIX: ${{ steps.tag.outputs.suffix }}
+        run: |
+          ZIP="${MODULE_ID}_${VERSION}${SUFFIX}.zip"
+          mkdir -p artifacts
+          zip -r "artifacts/${ZIP}" module.manifest ai
+          echo "Packaged artifacts/${ZIP}"
+
+      - name: Publish to Blob
+        id: blobRelease
+        uses: VirtoCommerce/vc-github-actions/publish-blob-release@master
+        with:
+          blobSAS: ${{ secrets.BLOB_TOKEN }}
+          blobUrl: ${{ vars.BLOB_URL }}
+
+      - name: Add link to PR
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: VirtoCommerce/vc-github-actions/publish-artifact-link@master
+        with:
+          artifactUrl: ${{ steps.blobRelease.outputs.packageUrl }}
+          repoOrg: ${{ github.repository_owner }}
+          downloadComment: 'Artifact URL:'

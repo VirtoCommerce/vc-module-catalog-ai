@@ -1,0 +1,77 @@
+name: vc_catalog_update_products_translations
+description: |
+  Apply translation updates to catalog products in batch. For each product, only the
+  fields you supply (`localizedName` and/or `reviews`) are overwritten — every other
+  field on the product (`categoryId`, `code`, `properties`, `images`, `variations`,
+  `seoInfos`, `associations`, etc.) is preserved as-is by the server.
+
+  Replace semantics: when sending `localizedName` or `reviews`, the full new value
+  replaces the existing one on the server — include every entry you want to keep
+  (existing + newly translated), not just the deltas.
+
+parameters:
+  type: object
+  properties:
+    products:
+      type: array
+      minItems: 1
+      description: |
+        One entry per product to update. Each entry is an object with these keys:
+
+          - `id` (string, required) — product id, e.g. `"76b6d640-e398-472b-85fa-9583a6b8e694"`.
+          - `localizedName` (object, optional) — shape `{ "values": { "<languageCode>": "<translated name>", ... } }`.
+            Include every language entry you want to keep on the product (existing + newly translated).
+            Omit the key entirely if you have no name changes for this product.
+          - `reviews` (array, optional) — list of review objects. Each entry:
+              `{ "id"?: string, "content": string, "languageCode": string, "reviewType": string }`.
+              `id` is the existing review id — keep it for entries you are preserving, omit it for
+              newly translated entries. `content` may contain HTML. `reviewType` is e.g.
+              `"QuickReview"` / `"FullReview"` — keep the source review's value when adding a translation.
+              `languageCode` is e.g. `"en-US"`. Include every review you want to keep
+              (existing + newly translated). Omit the key entirely if you have no review changes.
+
+        Example one-entry array:
+          [
+            {
+              "id": "76b6d640-e398-472b-85fa-9583a6b8e694",
+              "localizedName": { "values": { "en-US": "Red Bike", "de-DE": "Rotes Fahrrad" } },
+              "reviews": [
+                { "id": "existing-id-1", "content": "<p>Original</p>", "languageCode": "en-US", "reviewType": "FullReview" },
+                { "content": "<p>Übersetzt</p>", "languageCode": "de-DE", "reviewType": "FullReview" }
+              ]
+            }
+          ]
+      items:
+        type: object
+        additionalProperties: true
+        description: |
+          One product update: `{ "id": "<product-id>", "localizedName"?: {...}, "reviews"?: [...] }`.
+          See parent `products` description for shapes and rules.
+
+execution:
+  endpoint: /api/catalog/products
+  method: PATCH
+  mappings:
+    request:
+      body: |
+        {%- set ops = [] -%}
+        {%- for p in products -%}
+          {%- set doc = [{"op":"replace","path":"/id","value":p.id}] -%}
+          {%- if p.localizedName is defined and p.localizedName is not none -%}
+            {%- set _ = doc.append({"op":"replace","path":"/localizedName","value":p.localizedName}) -%}
+          {%- endif -%}
+          {%- if p.reviews is defined and p.reviews is not none -%}
+            {%- set _ = doc.append({"op":"replace","path":"/reviews","value":p.reviews}) -%}
+          {%- endif -%}
+          {%- set _ = ops.append(doc) -%}
+        {%- endfor -%}
+        {{ ops }}
+
+#permission:
+#  - catalog:update
+
+tags:
+  - catalog
+  - products
+  - translation
+  - write
