@@ -17,6 +17,10 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-24.04
+    env:
+      GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
+      BLOB_SAS: ${{ secrets.BLOB_TOKEN }}
+
     permissions:
       contents: read
       pull-requests: write
