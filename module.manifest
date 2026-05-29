@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<module>
+  <id>VirtoCommerce.CatalogAI</id>
+  <version>3.1000.0</version>
+  <version-tag></version-tag>
+
+  <platformVersion>3.915.0</platformVersion>
+  <dependencies>
+    <dependency id="VirtoCommerce.AI" version="3.800.0" />
+    <dependency id="VirtoCommerce.Catalog" version="3.885.0" />
+  </dependencies>
+
+  <title>VirtoCommerce Catalog AI</title>
+  <description>Catalog-specific AI agent and tool definitions for VirtoCommerce. Contributes a catalog translation expert agent and supporting tools to the aggregated AI manifest exposed by VirtoCommerce.AI.</description>
+
+  <authors>
+    <author>VirtoCommerce</author>
+  </authors>
+  <owners>
+    <owner>VirtoCommerce</owner>
+  </owners>
+
+  <projectUrl>https://github.com/VirtoCommerce/vc-module-catalog-ai</projectUrl>
+  <requireLicenseAcceptance>false</requireLicenseAcceptance>
+
+  <releaseNotes>
+    Features:
+    - Catalog Translation Expert agent (catalog-translation-expert)
+    - Tools: search-catalogs, search-products, get-products-with-descriptions, update-products-translations
+  </releaseNotes>
+  <copyright>Copyright © 2026 VirtoCommerce. All rights reserved</copyright>
+  <tags>extension module ai catalog</tags>
+</module>

@@ -1,0 +1,63 @@
+name: vc_catalog_search_catalogs
+description: |
+  Search catalogs in the catalog module by keyword, ids, or virtual flag.
+  Returns each catalog with its supported languages list (each language has languageCode and isDefault flag), and the catalog's default language.
+  Use this to identify the target catalog by name and to read the languages that products in that catalog should be translated into.
+require_approval: false
+
+parameters:
+  type: object
+  properties:
+    keyword:
+      type: string
+      description: Free-text search query for catalog name
+    objectIds:
+      type: array
+      items:
+        type: string
+      description: Filter by catalog ids
+    isVirtual:
+      type: boolean
+      description: Filter by virtual / physical flag
+    skip:
+      type: integer
+      default: 0
+      minimum: 0
+    take:
+      type: integer
+      default: 20
+      minimum: 1
+      maximum: 100
+  required: []
+
+execution:
+  endpoint: /api/catalog/catalogs/search
+  method: POST
+  mappings:
+    request:
+      body:
+        keyword: "{{keyword}}"
+        objectIds: "{{objectIds}}"
+        isVirtual: "{{isVirtual}}"
+        skip: "{{skip}}"
+        take: "{{take}}"
+    response:
+      items: >-
+        $.results[*].{
+          id: id,
+          name: name,
+          isVirtual: isVirtual,
+          defaultLanguage: defaultLanguage.languageCode,
+          languages: languages[*].{ languageCode: languageCode, isDefault: isDefault }
+        }
+      totalCount: "$.totalCount"
+
+#permission:
+#  - catalog:read
+
+tags:
+  - catalog
+  - catalogs
+  - languages
+  - search
+  - read
